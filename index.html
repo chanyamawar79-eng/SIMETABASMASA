@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMETABA - SMASAMETA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --bg-grid: #f8fafc;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #ffffff;
+            overflow-x: hidden;
+            color: #1e293b;
+        }
+
+        .grid-bg {
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
+            background-attachment: fixed;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-fade-up { animation: fadeInUp 0.5s ease-out forwards; }
+        .animate-scale-in { animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        .sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .main-content { transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-closed { transform: translateX(-100%); }
+        @media (min-width: 1024px) { .main-shifted { margin-left: 0 !important; } }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-btn.active { 
+            background: #eff6ff; 
+            color: #2563eb; 
+            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
+            transform: translateX(8px);
+        }
+        
+        .nav-btn.inactive:hover { 
+            background: #f8fafc; 
+            color: #2563eb;
+            transform: translateX(4px);
+        }
+
+        .modern-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(241, 245, 249, 0.8);
+            border-radius: 2rem;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modern-card:hover { 
+            transform: translateY(-10px) scale(1.02); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            border-color: #bfdbfe;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 1.25rem;
+            border: 2px solid transparent;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus { 
+            border-color: #2563eb; 
+            background: white; 
+            outline: none; 
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
+        }
+
+        #notification-container { position: fixed; top: 24px; right: 24px; z-index: 1000; pointer-events: none; }
+
+        .toast {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            transform: translateX(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 1px solid #f1f5f9;
+        }
+
+        .toast.show { transform: translateX(0); }
+
+        .btn-interact {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-interact:active { transform: scale(0.95); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    </style>
+</head>
+<body class="grid-bg">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-overlay" class="fixed inset-0 bg-white z-[2000] flex items-center justify-center p-6">
+        <div class="login-box animate-scale-in text-center max-w-sm w-full bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-xl">
+            <img src="https://smasa-magetan.sch.id/wp-content/uploads/2023/06/LOGO-SMA-NEGERI-1-MAGETAN.png" alt="SMASA" class="w-20 mx-auto mb-6">
+            <h2 class="text-2xl font-black text-slate-900 mb-2 uppercase">SIMETABA</h2>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">Masuk dengan NIS Anda</p>
+            
+            <div class="space-y-4">
+                <input type="number" id="login-nis" placeholder="Masukkan NIS Anda" class="input-field text-center">
+                <button onclick="handleLogin()" class="btn-interact w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 uppercase tracking-widest">MASUK KE SISTEM</button>
+            </div>
+            <p class="mt-8 text-[10px] text-slate-400 font-bold uppercase tracking-wider">SMAN 1 MAGETAN - OFFICIAL SYSTEM</p>
+        </div>
+    </div>
+
+    <div id="notification-container"></div>
+
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[90] hidden"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-72 bg-white z-[100] border-r border-slate-100 p-6 flex flex-col translate-x-0">
+        <button onclick="toggleSidebar()" class="absolute top-6 right-4 p-2 text-slate-400 hover:text-slate-900 lg:hidden">
+            <i data-lucide="x-circle" class="w-6 h-6"></i>
+        </button>
+
+        <div class="flex items-center gap-3 mb-8 px-2 mt-4">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
+                <i data-lucide="shield-check" class="text-white w-6 h-6"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-black text-slate-900 leading-none uppercase">SIMETABA</h2>
+                <p class="text-[9px] font-extrabold text-blue-500 uppercase tracking-widest mt-1">SMASAMETA Hub</p>
+            </div>
+        </div>
+
+        <div class="bg-slate-50 rounded-[1.5rem] p-5 text-center mb-6 border border-slate-100 animate-fade-up">
+            <div id="side-initial" class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 font-black text-xl shadow-inner">?</div>
+            <h4 id="side-nama" class="font-bold text-slate-900 text-sm leading-tight mb-1 truncate">Profil Belum Diatur</h4>
+            <p id="side-kelas" class="text-[9px] font-extrabold text-blue-500 uppercase mb-1">Status: Siswa</p>
+            <p id="side-nis" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NIS: -</p>
+        </div>
+
+        <nav class="space-y-1 flex-grow">
+            <button onclick="showSection('dashboard')" class="nav-btn active w-full" id="btn-dashboard">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </button>
+            <button onclick="showSection('profil')" class="nav-btn inactive w-full" id="btn-profil">
+                <i data-lucide="user-check" class="w-5 h-5"></i> Edit Profil
+            </button>
+            <button onclick="showSection('lapor-hilang')" class="nav-btn inactive w-full" id="btn-lapor-hilang">
+                <i data-lucide="search" class="w-5 h-5"></i> Lapor Kehilangan
+            </button>
+            <button onclick="showSection('lapor-titipan')" class="nav-btn inactive w-full" id="btn-lapor-titipan">
+                <i data-lucide="archive" class="w-5 h-5"></i> Lapor Penitipan
+            </button>
+        </nav>
+
+        <button onclick="handleLogout()" class="mt-4 flex items-center gap-3 p-4 text-red-500 font-bold text-sm hover:bg-red-50 rounded-xl transition-all btn-interact">
+            <i data-lucide="log-out" class="w-5 h-5"></i> Keluar Sistem
+        </button>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content" class="main-content lg:ml-72 min-h-screen p-4 lg:p-10 flex flex-col">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 bg-white/70 backdrop-blur-xl p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-slate-100 shadow-sm animate-fade-up">
+            <div class="flex items-center gap-5">
+                <button onclick="toggleSidebar()" class="w-12 h-12 bg-white rounded-xl flex items-center justify-center border border-slate-100 text-slate-600 shadow-sm hover:bg-slate-50 transition-all btn-interact">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <img src="https://smasa-magetan.sch.id/wp-content/uploads/2023/06/LOGO-SMA-NEGERI-1-MAGETAN.png" alt="SMASA" class="w-12 h-12 lg:w-16 lg:h-16 object-contain">
+                <div>
+                    <h1 class="text-xl lg:text-2xl font-black text-slate-900 uppercase leading-none">SIMETABA</h1>
+                    <p class="text-[10px] lg:text-xs font-bold text-slate-400 mt-2 italic">Official SMASAMETA Assets Management</p>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-4 bg-white px-6 py-3 rounded-[1.5rem] shadow-sm border border-slate-50">
+                <div class="text-right">
+                    <p class="text-sm font-black text-slate-800" id="top-nama">Siswa SMASAMETA</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase" id="top-nis">NIS: -</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-100" id="top-initial">S</div>
+            </div>
+        </header>
+
+        <!-- Section Dashboard -->
+        <section id="section-dashboard" class="section-animate">
+            <div class="bg-white/80 backdrop-blur-md p-8 rounded-[2.5rem] border border-slate-100 mb-10 shadow-sm animate-fade-up">
+                <h3 class="text-xl font-black text-slate-900 mb-4 flex items-center gap-3 uppercase">
+                    <i data-lucide="info" class="text-blue-500"></i> Informasi Platform
+                </h3>
+                <p class="text-sm text-slate-600 leading-relaxed text-justify">
+                    <b>SIMETABA</b> merupakan platform digital yang dikembangkan untuk mendukung pengelolaan penitipan serta pelaporan barang hilang dan temuan di lingkungan <b>SMASAMETA</b>. Melalui sistem ini, pengguna dapat mencatat penitipan barang, melaporkan kehilangan, serta menelusuri informasi barang yang ditemukan secara terstruktur, cepat, dan transparan.
+                </p>
+            </div>
+
+            <div class="mb-10 flex flex-col md:flex-row gap-6 items-center justify-between animate-fade-up" style="animation-delay: 0.1s">
+                <!-- Search Bar -->
+                <div class="relative w-full md:w-80 lg:w-96 group">
+                    <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors w-5 h-5"></i>
+                    <input type="text" id="search-input" onkeyup="renderDashboard()" placeholder="Cari barang..." class="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-100 outline-none focus:ring-4 focus:ring-blue-50/50 transition-all font-semibold shadow-sm text-sm">
+                </div>
+                
+                <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-2">
+                    <button onclick="setFilter('ALL')" id="f-all" class="btn-interact flex-shrink-0 px-6 py-2.5 rounded-full text-[10px] font-black uppercase bg-blue-600 text-white shadow-md">Semua</button>
+                    <button onclick="setFilter('HILANG')" id="f-hilang" class="btn-interact flex-shrink-0 px-6 py-2.5 rounded-full text-[10px] font-black uppercase bg-white border border-slate-100 text-slate-400 hover:border-red-200 hover:text-red-500">Kehilangan</button>
+                    <button onclick="setFilter('TITIPAN')" id="f-titipan" class="btn-interact flex-shrink-0 px-6 py-2.5 rounded-full text-[10px] font-black uppercase bg-white border border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-500">Penitipan</button>
+                </div>
+            </div>
+
+            <div id="report-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+                <!-- Cards render here -->
+            </div>
+        </section>
+
+        <!-- Section Profil -->
+        <section id="section-profil" class="hidden section-animate max-w-2xl mx-auto w-full">
+            <div class="bg-white p-6 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] shadow-sm border border-slate-100 animate-scale-in">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="user-pen" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black">Identitas Diri</h3>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Wajib diisi sebelum melapor</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nama Lengkap</label>
+                        <input type="text" id="v-nama" placeholder="Gunakan Nama Asli" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Kelas</label>
+                        <select id="v-kelas" class="input-field">
+                            <option value="">Pilih Kelas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">No. WhatsApp Aktif</label>
+                        <input type="tel" id="v-wa" placeholder="Contoh: 08123456789" class="input-field">
+                    </div>
+                </div>
+                <button onclick="saveProfile()" class="btn-interact w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl uppercase tracking-widest hover:bg-blue-700">SIMPAN PROFIL</button>
+            </div>
+        </section>
+
+        <!-- Section Lapor Hilang -->
+        <section id="section-lapor-hilang" class="hidden section-animate max-w-3xl mx-auto w-full">
+            <div class="bg-white p-6 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] shadow-sm border border-slate-100 animate-scale-in">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black">Lapor Barang Hilang</h3>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Informasikan barang Anda yang hilang</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8 mt-6">
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nama Barang</label>
+                        <input type="text" id="lh-nama" placeholder="Misal: Jaket Hitam Polos" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Kategori</label>
+                        <select id="lh-kat" class="input-field">
+                            <option value="Elektronik">Elektronik</option>
+                            <option value="Peralatan">Peralatan</option>
+                            <option value="Aksesoris">Aksesoris</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Lokasi Perkiraan Hilang</label>
+                        <input type="text" id="lh-lok" placeholder="Misal: Lapangan Basket" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Tanggal Kejadian</label>
+                        <input type="date" id="lh-tgl" class="input-field">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Link Foto G-Drive (Paste link di sini)</label>
+                        <input type="text" id="lh-foto" placeholder="Format: https://drive.google.com/file/d/..." class="input-field">
+                    </div>
+                </div>
+                <button onclick="submitReport('HILANG')" class="btn-interact w-full py-5 bg-red-500 text-white font-black rounded-2xl shadow-xl uppercase tracking-widest hover:bg-red-600">KIRIM LAPORAN KEHILANGAN</button>
+            </div>
+        </section>
+
+        <!-- Section Lapor Titipan -->
+        <section id="section-lapor-titipan" class="hidden section-animate max-w-3xl mx-auto w-full">
+            <div class="bg-white p-6 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] shadow-sm border border-slate-100 animate-scale-in">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="archive" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black">Lapor Barang Titipan</h3>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Barang temuan yang diserahkan ke Piket/Lobby</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8 mt-6">
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Barang Yang Ditemukan</label>
+                        <input type="text" id="lt-nama" placeholder="Misal: Flashdisk Biru" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Lokasi Penyimpanan Sekarang</label>
+                        <input type="text" id="lt-lok" placeholder="Misal: Meja Piket Depan" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Tanggal Ditemukan</label>
+                        <input type="date" id="lt-tgl" class="input-field">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Link Foto G-Drive (Paste link di sini)</label>
+                        <input type="text" id="lt-foto" placeholder="Format: https://drive.google.com/file/d/..." class="input-field">
+                    </div>
+                </div>
+                <button onclick="submitReport('TITIPAN')" class="btn-interact w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl uppercase tracking-widest hover:bg-blue-700">SIMPAN DATA PENITIPAN</button>
+            </div>
+        </section>
+
+        <footer class="mt-auto py-12 border-t border-slate-100 animate-fade-up">
+            <div class="max-w-4xl mx-auto text-center px-6">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-4">SIMETABA DIGITAL HUB • SMASAMETA OFFICIAL</p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // URL DEPLOY GOOGLE APPS SCRIPT
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypQtGhhgY5IMmxkvaXV01c93s8JXlcQuChcB8orKxaqSJAp9V6k9qhzTFJ7djHObDHKQ/exec";
+        const DEFAULT_IMG_LINK = "https://placehold.co/600x400/f1f5f9/94a3b8?text=Foto+Tidak+Tersedia";
+        
+        let currentUser = { nama: "Siswa SMASAMETA", nis: "-", kelas: "Siswa", wa: "", isVerified: false };
+        let filter = 'ALL';
+        let barangList = [];
+
+        async function loadBarangFromServer() {
+            try {
+                const response = await fetch(WEB_APP_URL);
+                const data = await response.json();
+                
+                // Pastikan format data sinkron dengan key dari getSheetData() di code.gs (huruf kecil tanpa spasi)
+                barangList = data.barang.map(item => ({
+                    ...item,
+                    // Sinkronisasi foto: code.gs menggunakan key lowercase dari header
+                    fotoDisplay: fixDriveLink(item.fotourl || item.foto)
+                }));
+                
+                renderDashboard();
+            } catch (e) {
+                console.error("Gagal memuat data dari server", e);
+                showNotification("Gagal memuat data", "error");
+            }
+        }
+
+        function initClasses() {
+            const select = document.getElementById('v-kelas');
+            const levels = ['X', 'XI', 'XII'];
+            levels.forEach(lvl => {
+                for(let i=1; i<=10; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = `${lvl}.${i}`;
+                    opt.textContent = `${lvl}.${i}`;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function handleLogin() {
+            const nisInput = document.getElementById('login-nis').value;
+            if(!nisInput) {
+                showNotification("Masukkan NIS terlebih dahulu!", "error");
+                return;
+            }
+            currentUser.nis = nisInput;
+            document.getElementById('login-overlay').classList.add('hidden');
+            updateUI();
+            showNotification("Berhasil Masuk ke SIMETABA!");
+            loadBarangFromServer();
+        }
+
+        function handleLogout() {
+            location.reload();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('sidebar-closed');
+            main.classList.toggle('main-shifted');
+            if(window.innerWidth < 1024) overlay.classList.toggle('hidden');
+        }
+
+        function fixDriveLink(url) {
+            if(!url || url.trim() === "" || !url.includes('http')) return DEFAULT_IMG_LINK;
+            if(url.includes('drive.google.com')) {
+                let id = "";
+                if(url.includes('/d/')) id = url.split('/d/')[1].split('/')[0];
+                else if(url.includes('id=')) id = url.split('id=')[1].split('&')[0];
+                if(id) return `https://lh3.googleusercontent.com/d/${id}`;
+            }
+            return url;
+        }
+
+        function showNotification(msg, type='success') {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div class="w-8 h-8 ${type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} rounded-full flex items-center justify-center">
+                    <i data-lucide="${type === 'success' ? 'check' : 'alert-circle'}" class="w-4 h-4"></i>
+                </div>
+                <p class="text-sm font-bold text-slate-700">${msg}</p>
+            `;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        async function saveProfile() {
+            const nama = document.getElementById('v-nama').value;
+            const kelas = document.getElementById('v-kelas').value;
+            let wa = document.getElementById('v-wa').value;
+
+            if(!nama || !kelas || !wa) {
+                showNotification("Lengkapi semua data profil!", "error");
+                return;
+            }
+
+            if(wa.startsWith('0')) wa = '62' + wa.slice(1);
+            else if(!wa.startsWith('62')) wa = '62' + wa;
+
+            currentUser.nama = nama;
+            currentUser.kelas = kelas;
+            currentUser.wa = wa;
+            currentUser.isVerified = true;
+
+            const formData = new URLSearchParams();
+            formData.append('action', 'updateProfil');
+            formData.append('nis', currentUser.nis);
+            formData.append('nama', nama);
+            formData.append('kelas', kelas);
+            formData.append('wa', wa);
+
+            try {
+                showNotification("Menyimpan ke Cloud...");
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: formData.toString(),
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                });
+                
+                updateUI();
+                showNotification("Profil berhasil disimpan!");
+                showSection('dashboard');
+            } catch (e) { 
+                console.error(e); 
+                showNotification("Gagal menyimpan profil", "error");
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('side-nama').innerText = currentUser.nama;
+            document.getElementById('side-nis').innerText = 'NIS: ' + currentUser.nis;
+            document.getElementById('side-kelas').innerText = 'Kelas: ' + currentUser.kelas;
+            document.getElementById('side-initial').innerText = currentUser.nama.charAt(0).toUpperCase();
+            document.getElementById('top-nama').innerText = currentUser.nama;
+            document.getElementById('top-nis').innerText = 'NIS: ' + currentUser.nis;
+            document.getElementById('top-initial').innerText = currentUser.nama.charAt(0).toUpperCase();
+        }
+
+        function showSection(id) {
+            const sections = ['dashboard', 'profil', 'lapor-hilang', 'lapor-titipan'];
+            sections.forEach(s => {
+                document.getElementById('section-' + s).classList.add('hidden');
+                document.getElementById('btn-' + s).classList.remove('active');
+                document.getElementById('btn-' + s).classList.add('inactive');
+            });
+            document.getElementById('section-' + id).classList.remove('hidden');
+            document.getElementById('btn-' + id).classList.remove('inactive');
+            document.getElementById('btn-' + id).classList.add('active');
+            lucide.createIcons();
+        }
+
+        function setFilter(f) {
+            filter = f;
+            ['ALL', 'HILANG', 'TITIPAN'].forEach(id => {
+                document.getElementById('f-'+id.toLowerCase()).className = "btn-interact flex-shrink-0 px-6 py-2.5 rounded-full text-[10px] font-black uppercase bg-white border border-slate-100 text-slate-400";
+            });
+            document.getElementById('f-'+f.toLowerCase()).className = "btn-interact flex-shrink-0 px-6 py-2.5 rounded-full text-[10px] font-black uppercase bg-blue-600 text-white shadow-md";
+            renderDashboard();
+        }
+
+        async function submitReport(type) {
+            if(!currentUser.isVerified) {
+                showNotification("Harap lengkapi profil Anda!", "error");
+                showSection('profil');
+                return;
+            }
+
+            const prefix = type === 'HILANG' ? 'lh' : 'lt';
+            const nama = document.getElementById(`${prefix}-nama`).value;
+            const lok = document.getElementById(`${prefix}-lok`).value;
+            const tgl = document.getElementById(`${prefix}-tgl`).value;
+            const rawFoto = document.getElementById(`${prefix}-foto`).value;
+            
+            if(!nama || !lok || !tgl) {
+                showNotification("Field wajib tidak boleh kosong!", "error");
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('action', 'addBarang');
+            formData.append('status', type);
+            formData.append('namaBarang', nama);
+            formData.append('kategori', type === 'HILANG' ? document.getElementById('lh-kat').value : 'Temuan');
+            formData.append('tanggal', tgl);
+            formData.append('lokasi', lok);
+            formData.append('foto', rawFoto);
+            formData.append('nama', currentUser.nama);
+            formData.append('nis', currentUser.nis);
+            formData.append('wa', currentUser.wa);
+
+            try {
+                showNotification("Sedang mengirim laporan...");
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: formData.toString(),
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                });
+                
+                showNotification("Laporan berhasil dikirim!");
+                showSection('dashboard');
+                loadBarangFromServer();
+                // Reset form
+                document.getElementById(`${prefix}-nama`).value = "";
+                document.getElementById(`${prefix}-lok`).value = "";
+                document.getElementById(`${prefix}-foto`).value = "";
+            } catch (e) {
+                showNotification("Gagal mengirim laporan", "error");
+            }
+        }
+
+        function renderDashboard() {
+            const grid = document.getElementById('report-grid');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            
+            let filtered = barangList.filter(b => {
+                const searchMatch = b.namabarang.toLowerCase().includes(search);
+                const filterMatch = filter === 'ALL' || b.status === filter;
+                return searchMatch && filterMatch;
+            });
+
+            grid.innerHTML = filtered.map((b, index) => {
+                // Key disesuaikan dengan header spreadsheet yang dinormalisasi (lowercase)
+                const displayNama = b.namabarang || "Barang Tanpa Nama";
+                const displayLokasi = b.lokasiterakhir || b.lokasi || "Lokasi tidak diketahui";
+                const displayTanggal = b.tanggallaporan || b.tanggaltitip || b.tanggal || "-";
+                const displayKategori = b.kategoribarang || b.kategori || "Umum";
+                const displayPelapor = b.namasiswa || "Siswa SMASAMETA";
+                const waNumber = b.nomor || b.wa || "";
+                const waUrl = waNumber ? `https://wa.me/${waNumber}` : "#";
+
+                return `
+                <div class="modern-card animate-fade-up" style="animation-delay: ${index * 0.1}s">
+                    <div class="h-48 relative overflow-hidden group">
+                        <img src="${b.fotoDisplay}" alt="${displayNama}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='${DEFAULT_IMG_LINK}'">
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 rounded-full text-[8px] font-black uppercase ${b.status === 'HILANG' ? 'bg-red-500 text-white' : 'bg-blue-600 text-white'} shadow-lg">
+                                ${b.status}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-[9px] font-black text-blue-500 uppercase">${displayKategori}</p>
+                            <p class="text-[9px] font-bold text-slate-300">#${b.idbarang || '000'}</p>
+                        </div>
+                        <h4 class="text-lg font-black text-slate-900 mb-4 truncate">${displayNama}</h4>
+                        <div class="space-y-2 mb-6 text-[11px] font-bold text-slate-400">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="map-pin" class="w-3 h-3 text-blue-500"></i>
+                                <span>${displayLokasi}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-3 h-3 text-blue-500"></i>
+                                <span>${displayTanggal}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-[10px] font-black uppercase">
+                                    ${displayPelapor.charAt(0)}
+                                </div>
+                                <div class="leading-none max-w-[100px]">
+                                    <p class="text-[10px] font-black text-slate-800 truncate">${displayPelapor}</p>
+                                    <p class="text-[8px] font-bold text-slate-400 mt-1 uppercase">NIS: ${b.nis || '-'}</p>
+                                </div>
+                            </div>
+                            <a href="${waUrl}" target="_blank" class="btn-interact px-3 py-2 bg-green-500 text-white text-[9px] font-black rounded-lg uppercase flex items-center gap-1.5 shadow-md ${!waNumber ? 'opacity-50 pointer-events-none' : ''}">
+                                <i class="fab fa-whatsapp"></i> Hubungi
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-300 font-bold uppercase tracking-widest text-xs">Data tidak ditemukan</div>`;
+            }
+            lucide.createIcons();
+        }
+
+        window.onload = () => {
+            initClasses();
+            lucide.createIcons();
+            // Dashboard akan di-render setelah login berhasil atau data dimuat
+        };
+    </script>
+</body>
+</html>
